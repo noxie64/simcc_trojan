@@ -13,7 +13,7 @@ pub struct StorageController {
 impl StorageController {
     pub fn save(&self) -> Result<(), Box<dyn Error>> {
         let mut buf = Vec::new();
-        self.serialize(&mut Serializer::new(&mut buf)).unwrap();
+        self.serialize(&mut Serializer::new(&mut buf))?;
 
         let mut data_f = File::create(paths::DATA)?;
         data_f.write_all(
