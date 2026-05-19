@@ -16,14 +16,18 @@ async fn main() -> Result<()> {
     if locked_store()?.iid.is_none() {
         {
             loop {
-                if let Ok(iid) = web::request_iid().await {
-                    let mut storage = STORAGE.lock().unwrap();
-                    storage.iid = Some(iid);
-                    println!("Retrieved iid from commander!");
-                    break;
+                match web::request_iid().await {
+                    Err(e) => {
+                        sleep(Duration::from_secs(5));
+                        println!("Failed to retrieve iid: {}", e)
+                    }
+                    Ok(iid) => {
+                        let mut storage = STORAGE.lock().unwrap();
+                        storage.iid = Some(iid);
+                        println!("Retrieved iid from commander!");
+                        break;
+                    }
                 }
-                sleep(Duration::from_millis(100));
-                println!("Failed to retrieve iid!")
             }
         }
     }
