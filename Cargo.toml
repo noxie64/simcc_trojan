@@ -6,15 +6,10 @@ edition = "2024"
 [target.x86_64-pc-windows-gnu]
 linker = "x86_64-w64-mingw32-gcc"
 
-[tasks.win-build]
-command = "cargo"
-args = ["build", "--target", "x86_64-pc-windows-gnu"]
-
-[tasks.win-run]
-dependencies = ["win-build"]
-command = "wine"
-args = ["target/x86_64-pc-windows-gnu/debug/${CARGO_MAKE_PROJECT_NAME}.exe"]
-
 [dependencies]
+anyhow = "1.0.102"
+reqwest = { version = "0.13.3", features = ["json"]}
 rmp-serde = "1.3.1"
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tokio = { version = "1", features = ["full"] }

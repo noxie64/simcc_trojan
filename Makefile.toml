@@ -6,3 +6,8 @@ args = ["build", "--target", "x86_64-pc-windows-gnu"]
 dependencies = ["win-build"]
 command = "wine"
 args = ["target/x86_64-pc-windows-gnu/debug/${CARGO_MAKE_PROJECT_NAME}.exe"]
+
+[tasks.run-dev]
+env = { "SIMCC_URL" = "https://localhost:8080"}
+command = "cargo"
+args = ["run"]

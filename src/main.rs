@@ -1,18 +1,26 @@
 mod constants;
 mod storage;
 mod ws;
+mod web;
 
-use crate::constants::paths;
-use crate::storage::get_storage;
+use crate::constants::{compiled, paths};
+use crate::storage::{STORAGE, locked_store};
+use anyhow::{Context, Result};
 
-fn main() {
-    {
-        let mut storage = get_storage().lock().unwrap();
-        storage.iid = Some(String::from("IID"));
-        if let Err(e) = storage.save() {
-            println!("Failed: {}", e);
-        } else {
-            println!("Wrote data to {}!", paths::DATA);
-        };
+#[tokio::main]
+async fn main() -> Result<()> {
+    locked_store()?.load()?;
+    if locked_store()?.iid.is_none() {
+        {
+            let mut storage = STORAGE.lock().unwrap();
+            storage.iid = Some(
+                web::request_iid()?
+            );
+        }
     }
+
+    locked_store()?.save()?;
+    println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
+
+    Ok(())
 }
