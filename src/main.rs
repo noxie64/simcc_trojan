@@ -1,12 +1,13 @@
 mod constants;
 mod storage;
 mod web;
-mod ws;
+mod websockets;
 
 use std::time::Duration;
 
 use crate::constants::{compiled, paths};
 use crate::storage::{STORAGE, locked_store};
+use crate::websockets::start_ws_loop;
 use anyhow::{Context, Result};
 use tokio::time::interval;
 
@@ -41,6 +42,8 @@ async fn main() -> Result<()> {
 
     locked_store()?.save()?;
     println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
+    println!("Starting websocket-loop!");
 
+    start_ws_loop().await?;
     Ok(())
 }
