@@ -15,16 +15,12 @@ pub mod paths {
 }
 
 pub mod compiled {
+    use crate::env_or;
+
     pub const HOST: &'static str = env!("SIMCC_HOST");
     pub const CCID: &'static str = env!("CCID");
-    const _RETRY_MILLIS: u64 = 5000;
-    pub const RETRY_MILLIS: u64 = match option_env!("RETRY_MILLIS") {
-        Some(val) => match u64::from_str_radix(val, 10) {
-            Ok(parsed) => parsed,
-            Err(_) => _RETRY_MILLIS
-        },
-        None => _RETRY_MILLIS
-    };
+    pub const HTTP_COMMANDER_RECONNECT: u64 = env_or!("HTTP_COMMANDER_RECONNECT", 5000, u64);
+    pub const WS_COMMANDER_RECONNECT: u64 = env_or!("WS_COMMANDER_RECONNECT", 3000, u64);
 
     pub fn HTTP_URL(path: &str) -> String {
         let proto = if option_env!("WEB_SECURE").is_some() {

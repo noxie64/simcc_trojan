@@ -2,6 +2,8 @@ mod constants;
 mod storage;
 mod web;
 mod websockets;
+#[macro_use]
+mod macros;
 
 use std::time::Duration;
 
@@ -20,7 +22,7 @@ async fn main() -> Result<()> {
     }
 
     if locked_store()?.iid.is_none() {
-        let mut interval = interval(Duration::from_millis(compiled::RETRY_MILLIS));
+        let mut interval = interval(Duration::from_millis(compiled::HTTP_COMMANDER_RECONNECT));
 
         loop {
             interval.tick().await;
@@ -34,16 +36,17 @@ async fn main() -> Result<()> {
                         storage.iid = Some(iid);
                     }
                     println!("Retrieved iid from commander!");
+                    locked_store()?.save()?;
+                    println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
+
                     break;
                 }
             }
         }
     }
 
-    locked_store()?.save()?;
-    println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
     println!("Starting websocket-loop!");
-
     start_ws_loop().await?;
+
     Ok(())
 }
