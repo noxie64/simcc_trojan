@@ -12,9 +12,14 @@ use tokio::time::interval;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    locked_store()?.load()?;
+    if storage::load()? {
+        println!("Loaded storage from {}!", paths::DATA.to_str().unwrap());
+    } else {
+        println!("Storage not loaded from disk!");
+    }
+
     if locked_store()?.iid.is_none() {
-        let mut interval = interval(Duration::from_secs(10));
+        let mut interval = interval(Duration::from_millis(compiled::RETRY_MILLIS));
 
         loop {
             interval.tick().await;

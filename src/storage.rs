@@ -27,13 +27,13 @@ impl StorageController {
         Ok(())
     }
 
-    pub fn load(&mut self) -> Result<()> {
+    pub fn load(&mut self) -> Result<bool> {
         if !paths::DATA.exists() {
-            return Ok(())
+            return Ok(false)
         }
 
         *self = rmp_serde::from_read(File::open(paths::DATA.to_str().unwrap())?)?;
-        Ok(())
+        Ok(true)
     }
 }
 
@@ -44,7 +44,7 @@ pub fn locked_store() -> Result<MutexGuard<'static, StorageController>> {
 pub static STORAGE: LazyLock<Mutex<StorageController>> = LazyLock::new(||Mutex::new(StorageController::default()));
 
 
-pub fn load() -> Result<()> {
+pub fn load() -> Result<bool> {
     STORAGE.lock().map_err(|e| Error::msg(e.to_string()))?.load()
 }
 

