@@ -1,3 +1,5 @@
+
+/// A quick macro to either load a compiled env or replace it with a default value 
 #[macro_export]
 macro_rules! env_or {
     ($key:expr, $default:expr, $ty:ty) => {

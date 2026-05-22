@@ -24,6 +24,7 @@ pub struct SimccMessage {
     pub payload: Payload,
 }
 
+/// Convert [SimccMessage] into [Message]
 impl TryInto<Message> for SimccMessage {
     fn try_into(self) -> Result<Message, Self::Error> {
         Ok(Message::Text(Utf8Bytes::from(serde_json::to_string(

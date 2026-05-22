@@ -6,6 +6,7 @@ use serde_json::{Value, json};
 
 use crate::constants::compiled::{self, CCID, HTTP_URL};
 
+///! Request the iid from the commander, using th ccid.
 pub async fn request_iid() -> Result<String> {
     let client = Client::new();
 

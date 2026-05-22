@@ -8,20 +8,20 @@ mod macros;
 use std::time::Duration;
 
 use crate::constants::{compiled, paths};
-use crate::storage::{STORAGE, locked_store};
+use crate::storage::STORAGE;
 use crate::websockets::start_ws_loop;
 use anyhow::{Context, Result};
 use tokio::time::interval;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    if storage::load()? {
+    if STORAGE.lock().unwrap().load()? {
         println!("Loaded storage from {}!", paths::DATA.to_str().unwrap());
     } else {
         println!("Storage not loaded from disk!");
     }
 
-    if locked_store()?.iid.is_none() {
+    if STORAGE.lock().unwrap().iid.is_some() {
         let mut interval = interval(Duration::from_millis(compiled::HTTP_COMMANDER_RECONNECT));
 
         loop {
@@ -34,11 +34,10 @@ async fn main() -> Result<()> {
                     {
                         let mut storage = STORAGE.lock().unwrap();
                         storage.iid = Some(iid);
+                        println!("Retrieved iid from commander!");
+                        storage.save();
+                        println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
                     }
-                    println!("Retrieved iid from commander!");
-                    locked_store()?.save()?;
-                    println!("Wrote data to {}!", paths::DATA.to_str().unwrap());
-
                     break;
                 }
             }

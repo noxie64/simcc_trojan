@@ -1,20 +1,23 @@
 use std::{
     fs::File,
     io::Write,
-    sync::{LazyLock, Mutex, MutexGuard},
+    sync::{LazyLock, Mutex},
 };
 
-use anyhow::{Error, Result};
 use crate::constants::paths;
+use anyhow::{Error, Result};
 use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
 
+/// Struct containing things saved into the storage:
+/// - `iid`: retrieved from the server by using the `ccid`
 #[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct StorageController {
     pub iid: Option<String>,
 }
 
 impl StorageController {
+    /// Save the current state of [STORAGE]
     pub fn save(&self) -> Result<()> {
         let mut buf = Vec::new();
         self.serialize(&mut Serializer::new(&mut buf))?;
@@ -27,9 +30,10 @@ impl StorageController {
         Ok(())
     }
 
+    /// Load the current saved state of [STORAGE]. If none exists, return false, true otherwise.
     pub fn load(&mut self) -> Result<bool> {
         if !paths::DATA.exists() {
-            return Ok(false)
+            return Ok(false);
         }
 
         *self = rmp_serde::from_read(File::open(paths::DATA.to_str().unwrap())?)?;
@@ -37,17 +41,6 @@ impl StorageController {
     }
 }
 
-pub fn locked_store() -> Result<MutexGuard<'static, StorageController>> {
-    STORAGE.lock().map_err(|e| Error::msg(e.to_string()))
-}
+pub static STORAGE: LazyLock<Mutex<StorageController>> =
+    LazyLock::new(|| Mutex::new(StorageController::default()));
 
-pub static STORAGE: LazyLock<Mutex<StorageController>> = LazyLock::new(||Mutex::new(StorageController::default()));
-
-
-pub fn load() -> Result<bool> {
-    STORAGE.lock().map_err(|e| Error::msg(e.to_string()))?.load()
-}
-
-pub fn save() -> Result<()> {
-    STORAGE.lock().map_err(|e| Error::msg(e.to_string()))?.save()
-}
