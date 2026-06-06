@@ -43,4 +43,3 @@ impl StorageController {
 
 pub static STORAGE: LazyLock<Mutex<StorageController>> =
     LazyLock::new(|| Mutex::new(StorageController::default()));
-

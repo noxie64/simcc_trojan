@@ -10,7 +10,7 @@ use std::time::Duration;
 use crate::constants::{compiled, paths};
 use crate::storage::STORAGE;
 use crate::websockets::start_ws_loop;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use tokio::time::interval;
 
 #[tokio::main]
