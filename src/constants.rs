@@ -21,7 +21,7 @@ pub mod compiled {
     use crate::env_or;
 
     /// The host which the simcc runs under, for dev `localhost:<PORT>`
-    pub const HOST: &'static str = env!("SIMCC_HOST");
+    pub const HOST: &'static str = env!("HOST");
 
     /// `ccid` used to retrieve the `iid` later on
     pub const CCID: &'static str = env!("CCID");
