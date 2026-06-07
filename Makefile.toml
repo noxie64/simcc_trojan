@@ -1,6 +1,6 @@
 [tasks.win-build]
 command = "cargo"
-args = ["build", "--target", "x86_64-pc-windows-gnu"]
+args = ["build", "--target", "x86_64-pc-windows-gnu", "--release"]
 
 [tasks.win-run]
 dependencies = ["win-build"]
