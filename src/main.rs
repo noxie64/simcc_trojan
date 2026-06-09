@@ -19,9 +19,6 @@ async fn main() -> Result<()> {
         println!("Loaded storage from {}!", paths::DATA.to_str().unwrap());
     } else {
         println!("Storage not loaded from disk!");
-    }
-
-    if STORAGE.lock().unwrap().iid.is_some() {
         let mut interval = interval(Duration::from_millis(compiled::HTTP_COMMANDER_RECONNECT));
 
         loop {
@@ -43,6 +40,8 @@ async fn main() -> Result<()> {
             }
         }
     }
+
+    if STORAGE.lock().unwrap().iid.is_some() {}
 
     println!("Starting websocket-loop!");
     start_ws_loop().await?;
