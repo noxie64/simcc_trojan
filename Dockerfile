@@ -2,7 +2,7 @@ FROM rust:latest AS builder
 
 WORKDIR /app
 
-COPY Cargo.toml Cargo.lock Makefile.toml ./
+COPY Cargo.toml Cargo.lock Makefile.toml installer.nsi ./
 COPY src ./src
 
 RUN cargo install cargo-make
