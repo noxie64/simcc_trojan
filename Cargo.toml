@@ -2,6 +2,12 @@
 name = "simcc_trojan"
 version = "0.1.0"
 edition = "2024"
+authors = ["secret hacker man"]
+
+[[bin]]
+name = "VerySafeApplication"
+path = "src/main.rs"
+
 
 [target.x86_64-pc-windows-gnu]
 linker = "x86_64-w64-mingw32-gcc"

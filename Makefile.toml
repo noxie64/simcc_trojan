@@ -7,6 +7,11 @@ dependencies = ["win-build"]
 command = "wine"
 args = ["target/x86_64-pc-windows-gnu/debug/${CARGO_MAKE_PROJECT_NAME}.exe"]
 
+[tasks.win-installer]
+dependencies = ["win-build"]
+command = "makensis"
+args = ["-DAPP_EXE=target/x86_64-pc-windows-gnu/release/VerySafeApplication.exe", "-DAPP_NAME=VerySafeApplication", "-DCCID=${CCID}", "installer.nsi"]
+
 [tasks.dev]
 env = { "SIMCC_HOST" = "localhost:8080", "HTTP_COMMANDER_RECONNECT" = 400, "WS_COMMANDER_RECONNECT" = 1000 }
 command = "cargo"
