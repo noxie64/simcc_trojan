@@ -26,7 +26,7 @@ pub async fn start_ws_loop() -> Result<()> {
 
     // Construct a request with the `iid` set for authentication
     let req = Request::builder()
-        .uri(WS_URL("/ws/infected"))
+        .uri(WS_URL("/api/ws/infected"))
         .header(
             "Authorization",
             format!("Bearer {}", {
