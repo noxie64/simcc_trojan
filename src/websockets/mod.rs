@@ -132,7 +132,7 @@ async fn handle_awaited_messages(
 
     let reply = match payload {
         Payload::Command(command) => Some(
-            Payload::CommandOutput(handle_command(command))
+            Payload::CommandOutput(handle_command(command)?)
         ),
         _ => None
     };
