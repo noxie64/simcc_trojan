@@ -3,12 +3,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::websockets::payloads::general::AwaitableRequest;
 
-
-
 #[derive(Serialize, Deserialize)]
 #[derive(Builder)]
 pub struct CommandPayload{
     pub command: String,
+    pub id: String
+}
+
+#[derive(Serialize, Deserialize)]
+#[derive(Builder)]
+pub struct ScreenshotRequestPayload {
     pub id: String
 }
 

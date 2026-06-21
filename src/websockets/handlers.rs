@@ -1,9 +1,11 @@
-use std::process::Command;
+use std::{io::Cursor, process::Command};
+use flate2::{Compression, write::GzEncoder};
+use screenshots::{Screen, image::ImageOutputFormat};
 
 use anyhow::Error;
-
+use std::io::Write;
 use crate::websockets::payloads::{
-    client::CommandOutputPayload, general::StringPayload, server::CommandPayload,
+    client::{CommandOutputPayload, ScreenshotPayload}, general::StringPayload, server::{CommandPayload, ScreenshotRequestPayload},
 };
 
 pub fn handle_goodbye(payload: StringPayload) {
@@ -35,6 +37,28 @@ pub fn handle_command(payload: CommandPayload) -> Result<CommandOutputPayload, E
         .build();
 
     response.status_code = command_result.status.code();
+
+    Ok(response)
+}
+
+pub fn handle_screenshot(payload: ScreenshotRequestPayload) -> Result<ScreenshotPayload, Error> {
+    let screens = Screen::all()?;
+
+    let first_screen = screens[0];
+
+    let image = first_screen.capture()?;
+    let mut jpeg_bytes: Vec<u8> = Vec::new();
+
+    image.write_to(&mut Cursor::new(&mut jpeg_bytes), ImageOutputFormat::Jpeg(85))?;
+
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(&jpeg_bytes)?;
+    let gzip_bytes: Vec<u8> = encoder.finish()?;
+
+    let response = ScreenshotPayload::builder()
+        .id(payload.id)
+        .image_data(gzip_bytes)
+        .build();
 
     Ok(response)
 }

